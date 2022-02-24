@@ -32,13 +32,13 @@ class LineSensorsAPIView(generics.RetrieveAPIView):
                 # print(mac)
                 pin = sensor.port
                 sensor_data = "no data"
-                for gateway_data in live_datas: 
+                for gateway_data in live_datas:
                     # print("in other for")
                     if gateway_data['mac_addr'] == mac and gateway_data['pin'] == pin:
                         sensor_data = gateway_data['sensor_data']
                         if sensor_data == "None":
                             sensor_data = "no data"
-                
+
                 # print("sesnsor", SensorSerializer(sensor).data)
                 resJsoned = {"live_data": sensor_data}
                 resJsoned.update(SensorSerializer(sensor).data)
@@ -65,6 +65,7 @@ def cal_aggr(start_time, end_time, dur_time):
     print("logs return data:", logs_aggregated)
     data = logs_aggregated.json()
 
+
     return data
 
 # class LineSensorsAggrAPIView(generics.RetrieveAPIView):
@@ -73,9 +74,9 @@ def cal_aggr(start_time, end_time, dur_time):
 
 @api_view(['POST'])
 def sensorsAggrData(request):
-    if request.method == 'POST':        
+    if request.method == 'POST':
         if ('start_time' in request.data) and ('end_time' in request.data) and ('dur_time' in request.data):
-            if (request.data['start_time'] and request.data['end_time'] and request.data['dur_time']):      
+            if (request.data['start_time'] and request.data['end_time'] and request.data['dur_time']):
                 try:
                     sensorInLines = Sensor.objects.all()
                     response = []
@@ -98,19 +99,19 @@ def sensorsAggrData(request):
                         sensor_data = 0.0
                         sensor_timed_data = []
                         time = 0
-                        for timeseperated_data in live_datas: 
+                        for timeseperated_data in live_datas:
                             if timeseperated_data:
                                 for gateway_data in timeseperated_data:
-                                    if gateway_data['mac_addr'] == mac and gateway_data['pin'] == pin:    
+                                    if gateway_data['mac_addr'] == mac and gateway_data['pin'] == pin:
                                         if(gateway_data['sum_of_diff'] < 0 ):
                                             sensor_timed_data.append({"time":time, "value":"no data"})
 
-                                        else:   
+                                        else:
                                             sensor_data = sensor_data + gateway_data['sum_of_diff']
                                             sensor_timed_data.append({"time":time, "value":gateway_data['sum_of_diff']})
                                             # sensor_timed_data[str(time)] = gateway_data['sum_of_diff']
                             time = time + 1
-                                        
+
                         # print("factory_id",factory.id)
                         # print("line_id",line.id)
                         resJsoned = {"aggr_data": sensor_data, "data_in_time": sensor_timed_data}
@@ -132,54 +133,71 @@ def sensorsAggrData(request):
 
 @api_view(['POST'])
 def lineSensorsAggr(request):
-    if request.method == 'POST':        
+    if request.method == 'POST':
         if ('start_time' in request.data) and ('end_time' in request.data) and ('dur_time' in request.data) and ('line_id' in request.data):
-            if (request.data['start_time'] and request.data['end_time'] and request.data['dur_time']) and request.data['line_id']:      
+            if (request.data['start_time'] and request.data['end_time'] and request.data['dur_time']) and request.data['line_id']:
                 try:
-                
                     sensorInLines = Sensor.objects.filter(line_id = request.data['line_id'])
                     response = []
                     live_datas = cal_aggr(request.data['start_time'], request.data['end_time'], request.data['dur_time'])
+
+
+
+
                     for sensor in sensorInLines:
-                        
+
+
                         line = ProductLine.objects.get(id=(sensor.line_id).id)
-                        # print(line)
+                        #print(line)
                         floor = ShopFloor.objects.get(id=(line.floor_id).id)
-                        # print(floor)
+                        #print(floor)
+
                         factory = Factory.objects.get(id=(floor.factory_id).id)
-                        # print(factory)
+                        #print(factory)
+
 
                         mac = sensor.mac_addr
                         pin = sensor.port
+
                         sensor_data = 0.0
                         sensor_timed_data = []
                         time = 0
-                        # print("time seperated dataaaaaaaaaaaaaaa", live_datas )
-                        for timeseperated_data in live_datas: 
+                        #print("time seperated dataaaaaaaaaaaaaaa", live_datas )
+                        for timeseperated_data in live_datas:
+                            # print(timeseperated_data)
                             if timeseperated_data:
+
                                 sensorInFlag =False
                                 for gateway_data in timeseperated_data:
-                                    if gateway_data['mac_addr'] == mac and gateway_data['pin'] == pin:    
+                                    #print(gateway_data)
+
+
+
+                                    if gateway_data['mac_addr'] == mac and gateway_data['pin'] == pin:
                                         sensorInFlag = True
                                         if(gateway_data['sum_of_diff'] < 0 ):
-                                            sensor_timed_data.append({"x":time, "y":-1})
 
-                                        else:   
+                                            sensor_timed_data.append({"x":gateway_data['sendDataTime'].split(".")[0], "y":-1})
+
+                                        else:
                                             # sensor_data = sensor_data + gateway_data['sum_of_diff']
-                                            sensor_timed_data.append({"x":time, "y":gateway_data['sum_of_diff']})
+                                            sensor_timed_data.append({"x":gateway_data['sendDataTime'].split(".")[0], "y":gateway_data['sum_of_diff']})
                                             # sensor_timed_data[str(time)] = gateway_data['sum_of_diff']
                                 if not (sensorInFlag):
-                                    sensor_timed_data.append({"x":time, "y":-1})
-                            else: 
-                                sensor_timed_data.append({"x":time, "y":-1})
+
+                                    sensor_timed_data.append({"x":gateway_data['sendDataTime'].split(".")[0], "y":-1})
+                            else:
+
+                                sensor_timed_data.append({"x":gateway_data['sendDataTime'].split(".")[0], "y":-1})
                             time = time + 1
-                                        
+
                         # print("factory_id",factory.id)
                         # print("line_id",line.id)
                         resJsoned = {"id": sensor.name , "data": sensor_timed_data}
                         # resJsoned.update(SensorSerializer(sensor).data)
                         # resJsoned.update({"factory_id":factory.id, "line_id":line.id})
                         response.append((resJsoned))
+
                     return Response((response), status=status.HTTP_200_OK)
                 except Sensor.DoesNotExist:
                     return Response({"detail": "Sensor Not found."}, status=status.HTTP_404_NOT_FOUND)
@@ -191,5 +209,3 @@ def lineSensorsAggr(request):
                 return Response({"period time or line id is not specified"},status=status.HTTP_400_BAD_REQUEST)
         else:
             return Response({"period time or line id is not specified"},status=status.HTTP_400_BAD_REQUEST)
-
-
