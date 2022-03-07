@@ -11,6 +11,7 @@ import requests
 import traceback
 from .gatewayApis import inlocal_local_getLogs, inlocal_server_getLogs, inserver_getLogs
 from .gatewayApis import inlocal_server_live, inlocal_local_live, inserver_live
+from .gatewayApis import inlocal_local_getLogsData
 
 
 
@@ -40,10 +41,10 @@ class LineSensorsAPIView(generics.RetrieveAPIView):
                             sensor_data = "no data"
 
                 # print("sesnsor", SensorSerializer(sensor).data)
-                resJsoned = {"live_data": sensor_data}
-                resJsoned.update(SensorSerializer(sensor).data)
-                # print("eeeeeeeeeeeeeeee", resJsoned)
-                response.append((resJsoned))
+                sensorRes = {"live_data": sensor_data}
+                sensorRes.update(SensorSerializer(sensor).data)
+                # print("eeeeeeeeeeeeeeee", sensorRes)
+                response.append((sensorRes))
                 # print(response)
             return Response((response), status=status.HTTP_200_OK)
         except:
@@ -51,26 +52,22 @@ class LineSensorsAPIView(generics.RetrieveAPIView):
             return Response({"detail": "Not found."}, status=status.HTTP_404_NOT_FOUND)
 
 
-def cal_aggr(start_time, end_time, dur_time):
+def cal_logs(start_time, end_time):
 
-    URL = inlocal_local_getLogs()
+    URL = inlocal_local_getLogsData()
     BODY ={
             "start_time": start_time,
-            "end_time": end_time,
-            "dur_time": dur_time
+            "end_time": end_time
         }
-    logs_aggregated = requests.post(url = URL, data = BODY)
+    logs_datas = requests.post(url = URL, data = BODY)
     print("body:",BODY)
     print("url",URL)
-    print("logs return data:", logs_aggregated)
-    data = logs_aggregated.json()
+    print("logs return data:", logs_datas)
+    data = logs_datas.json()
 
 
     return data
 
-# class LineSensorsAggrAPIView(generics.RetrieveAPIView):
-#     def retrieve(self, request, *args, **kwargs):
-        # owner = self.kwargs['owner_id']
 
 @api_view(['POST'])
 def sensorsAggrData(request):
@@ -209,3 +206,39 @@ def lineSensorsAggr(request):
                 return Response({"period time or line id is not specified"},status=status.HTTP_400_BAD_REQUEST)
         else:
             return Response({"period time or line id is not specified"},status=status.HTTP_400_BAD_REQUEST)
+# class SensorsLogDataAPIView(generics.RetrieveAPIView):
+#     def retrieve(self,request, *args, **kwargs):
+#         try:
+#             sensorInLines = Sensor.objects.all()
+#             response = []
+#             live_datas = cal_logs(self.request.query_params.get('start_time'), self.request.query_params.get('end_time'))
+            
+#             for sensor in sensorInLines:
+#                 sensorRes =[]
+#                 mac = sensor.mac_addr
+#                 # print(mac)
+#                 pin = sensor.port
+#                 sensor_data = -1
+#                 # sensorRes.append(SensorSerializer(sensor).data)
+#                 sensorDataRes = []
+#                 for gateway_data in live_datas: 
+#                     # print("in other for")
+#                     if gateway_data['mac_addr'] == mac and gateway_data['pin'] == pin:
+#                         if sensor_data == "None":
+#                             sensor_data = -1
+#                         else:
+#                             sensor_data = gateway_data['sensor_data']
+                        
+#                         sensorDataRes.append({"x":gateway_data['sendDataTime'], "y":sensor_data})
+#                         # print("sesnsor", SensorSerializer(sensor).data)
+#                 sensorRes=[{"id": sensor.name , "data": sensorDataRes}]
+#                 # sensorRes.append(sensorDataRes)
+#                 response.append((sensorRes))
+#             return Response((response), status=status.HTTP_200_OK)
+#         except Sensor.DoesNotExist:
+#             return Response({"detail": "Sensor Not found."}, status=status.HTTP_404_NOT_FOUND)
+#         except :
+#             traceback.print_exc()
+#             return Response({"problem"}, status=status.HTTP_404_NOT_FOUND)
+
+
