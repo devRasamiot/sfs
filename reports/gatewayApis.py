@@ -17,3 +17,5 @@ def inserver_getLogs ():
 
 def inlocal_local_getLogsData () :
     return 'http://localhost:8080/gateway/api/getLogs/inPeriod/data/'
+def inserver_getLogsData () :
+    return 'http://localhost:8035/gateway/api/getLogs/inPeriod/data/'

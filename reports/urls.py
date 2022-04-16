@@ -11,6 +11,7 @@ urlpatterns =[
     path('sensor/inline/aggrdata/', lineSensorsAggr),
     path('sensors/logdatas/', SensorsLogDataAPIView.as_view())
     
+    
 ]
 
 

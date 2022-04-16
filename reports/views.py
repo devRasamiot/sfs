@@ -71,10 +71,12 @@ def cal_logs(start_time, end_time):
 class SensorsLogDataAPIView(generics.RetrieveAPIView):
     def retrieve(self,request, *args, **kwargs):
         try:
-            sensorInLines = Sensor.objects.all()
+            sensorInLines = Sensor.objects.filter(line_id = self.request.query_params.get('line_id'))
             response = []
             live_datas = cal_logs(self.request.query_params.get('start_time'), self.request.query_params.get('end_time'))
-            
+            # print(sensorInLines)
+            # print('*****************************************************************')
+            # print(self.request.query_params.get('line_id'))
             for sensor in sensorInLines:
                 sensorRes =[]
                 mac = sensor.mac_addr
@@ -83,6 +85,7 @@ class SensorsLogDataAPIView(generics.RetrieveAPIView):
                 sensor_data = -1
                 # sensorRes.append(SensorSerializer(sensor).data)
                 sensorDataRes = []
+                # print(len(live_datas))
                 for gateway_data in live_datas: 
                     # print("in other for")
                     if gateway_data['mac_addr'] == mac and gateway_data['pin'] == pin:
